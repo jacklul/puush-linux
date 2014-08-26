@@ -57,7 +57,7 @@ function puushFile()
 	fi
 	
 	if ! [ -f "$1" -a -r "$1" ] ; then
-		echo "File '$1' is not a valid file or is not readable."
+		printf "File '$1' is not a valid file or is not readable.\n"
 		return
 	fi
 
@@ -67,7 +67,7 @@ function puushFile()
 	    /bin/rm "$1"
 	fi
 
-	echo $result
+	printf $result
 }
 
 # Need help?
@@ -115,19 +115,18 @@ checkDependency "notify-send"
 # Check for configuration, if it doesn't exist create it and promt user for API key
 if ! [ -f "$HOME/.config/puush/puush.conf" ] ; then
 	printf "Configuration file is missing, creating new one...\n"
-	
+
 	if mkdir -p $HOME/.config/puush/; then
 		printf "\n(You can find your API key at http://puush.me/account/settings)\n"
 		read -p "API key: " apikey
-
-		echo "# puush-linux configuration file
-
+		
+		printf "# puush-linux configuration file\n
 # API key (You can find your API key at http://puush.me/account/settings)
 PUUSH_API_KEY=$apikey
-" > $HOME/.config/puush/puush.conf
+\n" > $HOME/.config/puush/puush.conf
 
+		printf "\n"
 		. $HOME/.config/puush/puush.conf
-		echo ""
 	else
 		exit 1
 	fi
@@ -138,14 +137,14 @@ fi
 # Handle empty API key or no parameter
 if [ -z "$PUUSH_API_KEY" ]; then
 	if [ -t 1 ] ; then
-		echo "Missing required configuration variable 'PUUSH_API_KEY'!"
-		echo "Please set it in '$HOME/.config/puush/puush.conf'."
+		printf "Missing required configuration variable 'PUUSH_API_KEY'!\n"
+		printf "Please set it in '$HOME/.config/puush/puush.conf'.\n"
 	else
 		notify-send "Missing required configuration variable 'PUUSH_API_KEY'!" "Please set it in '$HOME/.config/puush/puush.conf'." -t 5000 -i "/usr/share/pixmaps/puush.png"
 	fi
 	exit 1
 elif [ -z "$1" ]; then
-	echo "Try 'puush --help' for usage informations."
+	printf "Try 'puush --help' for usage informations.\n"
 	exit 1
 fi
 
@@ -194,16 +193,17 @@ case "$1" in
 		;;
 esac
 
-if echo "$fileURL" | grep -q "puu.sh"  ; then
-	echo $fileURL | xclip -selection "clipboard"
+if printf "$fileURL" | grep -q "puu.sh"  ; then
+	printf $fileURL | xclip -selection "clipboard"
+	
 	if [ -t 1 ] ; then
-		echo "$fileURL"
+		printf "$fileURL\n"
 	else
 		notify-send "puuush complete!" "$fileURL" -t 3000 -i "/usr/share/pixmaps/puush.png"
 	fi
 else
 	if [ -t 1 ] ; then
-		echo "puush error: $fileURL"
+		printf "puush error: $fileURL\n"
 	else
 		notify-send "puuush error!" "$fileURL" -t 5000 -i "/usr/share/pixmaps/puush.png"
 	fi
