@@ -1,0 +1,194 @@
+#!/bin/bash
+# Puush for Ubuntu/linux
+#  by Jack'lul <www.jacklul.com>
+#
+# Rewrite of script created by Sunmock Yang (https://github.com/sunmockyang/puush-linux)
+#
+# Dependencies:
+# - gnome-screenshot
+# - curl
+# - xclip
+# - notify-send (notify-osd)
+#
+# Instructions:
+# - Run install.sh to install this script in /usr/local/bin and copy icon to /usr/share/pixmaps
+# - Set up keyboard shortcuts within linux (in Ubuntu it's system settings > keyboard > keyboard shortcuts > custom shortcuts)
+#
+# 		command			description		(recommended keyboard shortcut)
+#		---------------------------------------------------------------
+#		puush -w		puush window	(Ctrl + Shift + 2/@)
+#		puush -d		puush desktop	(Ctrl + Shift + 3/#)
+#		puush -a		puush area 		(Ctrl + Shift + 4/$)
+#		puush -f		upload file		(Ctrl + Shift + U)
+#
+#######################
+
+# Simple function to check if command exists
+function checkDependency() 
+{
+	if ! which $1 >/dev/null; then
+		printf "Command '%s' not found! Check dependencies!\n" "$1"
+		exit 1
+	fi
+}
+
+# $1: fileName (Required)
+# $2: delete after use (Not required. Default: false)
+function puushFile()
+{
+	if [[ -z "$1" ]]; then
+		return
+	fi
+	
+	if ! [ -f "$1" -a -r "$1" ] ; then
+		echo "File '$1' is not a valid file or is not readable."
+		return
+	fi
+
+	result=`curl "https://puush.me/api/up" -# -F "k=$PUUSH_API_KEY" -F "z=lulz" -F "f=@$1" | sed -E 's/^.+,(.+),.+,.+$/\1\n/'`
+
+	if [ "$2" = true ]; then
+	    /bin/rm "$1"
+	fi
+
+	echo $result
+}
+
+# Need help?
+function printHelp ()
+{
+	printf "puush-linux by Jack'lul <www.jacklul.com>\n"
+	printf " GitHub: https://github.com/jacklul/puush-linux\n"
+	printf "\n"
+	printf "Usage:\n"
+	printf "  puush [OPTIONS] [FILE]\n"
+	printf "\n"
+	printf "OPTIONS:\n"
+	printf "  -d, --desktop		puush entire desktop\n"
+	printf "  -w, --window		puush current window\n"
+	printf "  -a, --area		select area to puush\n"
+	printf "  -f, --file		puush specific file (opens file dialog)\n"
+	printf "  -h, --help		shows this help\n"
+	printf "\n"
+	printf "FILE:\n"
+	printf "  FILE			optional: path of file to puush\n"
+	printf "\n"
+}
+
+# Manages org.gnome.gnome-screenshot auto-save-directory
+function autosavedir()
+{			
+	if [ "$1" = "backup" ]; then
+		oldsavedir=`gsettings get org.gnome.gnome-screenshot auto-save-directory`
+	elif [ "$1" = "setnew" ]; then
+		gsettings set org.gnome.gnome-screenshot auto-save-directory "file://$HOME/.cache/puush/"
+	elif [ "$1" = "restore" ]; then
+		gsettings set org.gnome.gnome-screenshot auto-save-directory $oldsavedir
+	fi	
+}
+
+###################
+# LETS BEGIN
+
+# Check for required commands
+checkDependency "gnome-screenshot"
+checkDependency "curl"
+checkDependency "xclip"
+checkDependency "notify-send"
+
+# Check for configuration, if it doesn't exist create it and promt user for API key
+if ! [ -f "$HOME/.config/puush/puush.conf" ] ; then
+	printf "Configuration file is missing, creating new one...\n"
+	
+	if mkdir -p $HOME/.config/puush/; then
+		printf "\n(You can find your API key at http://puush.me/account/settings)\n"
+		read -p "API key: " apikey
+
+		echo "# puush-linux configuration file
+
+# API key (You can find your API key at http://puush.me/account/settings)
+PUUSH_API_KEY=$apikey
+" > $HOME/.config/puush/puush.conf
+
+		. $HOME/.config/puush/puush.conf
+		echo
+	else
+		exit 1
+	fi
+else
+	. $HOME/.config/puush/puush.conf
+fi
+
+# Handle empty API key or no parameter
+if [ -z "$PUUSH_API_KEY" ]; then
+	if [ -t 1 ] ; then
+		echo "Missing required configuration variable 'PUUSH_API_KEY'!"
+		echo "Please set it in '$HOME/.config/puush/puush.conf'."
+	else
+		notify-send "Missing required configuration variable 'PUUSH_API_KEY'!" "Please set it in '$HOME/.config/puush/puush.conf'." -t 5000 -i "/usr/share/pixmaps/puush.png"
+	fi
+	exit 1
+elif [ -z "$1" ]; then
+	echo "Try 'puush --help' for usage informations."
+	exit 1
+fi
+
+mkdir -p $HOME/.cache/puush
+fileName=""
+fileURL=""
+
+# Get file to puush and puush it
+case "$1" in
+	-d|--desktop|--d)
+			autosavedir backup && autosavedir setnew
+			gnome-screenshot >/dev/null 2>/dev/null
+			fileName="$HOME/.cache/puush/$(ls -t "$HOME/.cache/puush/" | head -1)"
+			fileURL=`puushFile "$fileName" true`
+			autosavedir restore
+		;;
+	-w|--window|--w)
+			autosavedir backup && autosavedir setnew
+			gnome-screenshot -w >/dev/null 2>/dev/null
+			fileName="$HOME/.cache/puush/$(ls -t "$HOME/.cache/puush/" | head -1)"
+			fileURL=`puushFile "$fileName" true`
+			autosavedir restore
+		;;
+	-a|--area|--a)
+			autosavedir backup && autosavedir setnew
+			gnome-screenshot -a >/dev/null 2>/dev/null
+			fileName="$HOME/.cache/puush/$(ls -t "$HOME/.cache/puush/" | head -1)"
+			fileURL=`puushFile "$fileName" true`
+			autosavedir restore
+		;;
+	-f|--file|--f)
+			fileName=`zenity --file-selection`
+			if ! [ -z "$fileName" ] ; then
+				fileURL=`puushFile "$fileName" false`
+			else
+				exit 1
+			fi
+		;;
+	-h|--help|--h)
+			printHelp
+			exit 1
+		;;
+	*)
+			fileName=$1
+			fileURL=`puushFile "$fileName" false`
+		;;
+esac
+
+if echo "$fileURL" | grep -q "puu.sh"  ; then
+	if [ -t 1 ] ; then
+		echo "$fileURL"
+	else
+		echo $fileURL | xclip -selection "clipboard"
+		notify-send "puuush complete!" "$fileURL" -t 3000 -i "/usr/share/pixmaps/puush.png"
+	fi
+else
+	if [ -t 1 ] ; then
+		echo "puush error: $fileURL"
+	else
+		notify-send "puuush error!" "$fileURL" -t 5000 -i "/usr/share/pixmaps/puush.png"
+	fi
+fi

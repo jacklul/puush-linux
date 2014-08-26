@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ "$(whoami)" != "root" ]; then
+	echo "This script must be run as root (sudo)."
+	exit 1
+fi
+
+mkdir -p /usr/local/bin
+cp -i puush /usr/local/bin/puush
+chmod 755 /usr/local/bin/puush
+cp -i puush.png /usr/share/pixmaps/puush.png
+chmod 644 /usr/share/pixmaps/puush.png
+
+echo "puush-linux should be now installed!"
