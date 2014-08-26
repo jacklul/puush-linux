@@ -1,8 +1,7 @@
 #!/bin/bash
-# Puush for Ubuntu/linux
+# Puush for Linux (https://github.com/jacklul/puush-linux)
 #  by Jack'lul <www.jacklul.com>
-#
-# Rewrite of script created by Sunmock Yang (https://github.com/sunmockyang/puush-linux)
+#   Rewrite of script created by Sunmock Yang (https://github.com/sunmockyang/puush-linux)
 #
 # Dependencies:
 # - gnome-screenshot
@@ -11,16 +10,33 @@
 # - notify-send (notify-osd)
 #
 # Instructions:
-# - Run install.sh to install this script in /usr/local/bin and copy icon to /usr/share/pixmaps
+# - Run puush-install as root to install this script in /usr/local/bin and copy icon to /usr/share/pixmaps
+# - Run puush from the terminal to create config file and set your API key (http://puush.me/account/settings)
 # - Set up keyboard shortcuts within linux (in Ubuntu it's system settings > keyboard > keyboard shortcuts > custom shortcuts)
 #
-# 		command			description		(recommended keyboard shortcut)
-#		---------------------------------------------------------------
-#		puush -w		puush window	(Ctrl + Shift + 2/@)
-#		puush -d		puush desktop	(Ctrl + Shift + 3/#)
-#		puush -a		puush area 		(Ctrl + Shift + 4/$)
-#		puush -f		upload file		(Ctrl + Shift + U)
+# 	command			description		(recommended keyboard shortcut)
+#	---------------------------------------------------------------
+#	puush -w		puush window		(Ctrl + Shift + 2/@)
+#	puush -d		puush desktop		(Ctrl + Shift + 3/#)
+#	puush -a		puush area 		(Ctrl + Shift + 4/$)
+#	puush -f		upload file		(Ctrl + Shift + U)
 #
+# - You can also run these commands from the terminal
+#
+# License:
+#  This script is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public
+#  License (LGPL) as published by the Free Software Foundation; either
+#  version 2.1 of the License, or (at your option) any later version.
+# 
+#  This script is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+#  Lesser General Public License for more details.
+# 
+#  You should have received a copy of the GNU Lesser General Public
+#  License along with this script. If not, see <http://www.gnu.org/licenses/>.
+# 
 #######################
 
 # Simple function to check if command exists
@@ -111,7 +127,7 @@ PUUSH_API_KEY=$apikey
 " > $HOME/.config/puush/puush.conf
 
 		. $HOME/.config/puush/puush.conf
-		echo
+		echo ""
 	else
 		exit 1
 	fi
