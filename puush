@@ -195,10 +195,10 @@ case "$1" in
 esac
 
 if echo "$fileURL" | grep -q "puu.sh"  ; then
+	echo $fileURL | xclip -selection "clipboard"
 	if [ -t 1 ] ; then
 		echo "$fileURL"
 	else
-		echo $fileURL | xclip -selection "clipboard"
 		notify-send "puuush complete!" "$fileURL" -t 3000 -i "/usr/share/pixmaps/puush.png"
 	fi
 else
