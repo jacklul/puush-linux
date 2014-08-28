@@ -11,4 +11,8 @@ chmod 755 /usr/local/bin/puush
 cp -i puush.png /usr/share/pixmaps/puush.png
 chmod 644 /usr/share/pixmaps/puush.png
 
-echo "puush-linux should be now installed!"
+if ! [ -f "/usr/share/pixmaps/puush.png" -a -r "/usr/share/pixmaps/puush.png" -a -x "/usr/local/bin/puush" ] ; then
+	echo "puush-linux install failed!"
+else
+	echo "puush-linux is now installed!"
+fi
