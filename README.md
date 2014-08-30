@@ -9,6 +9,7 @@ _Rewrite of script created by Sunmock Yang (https://github.com/sunmockyang/puush
  - curl
  - xclip
  - notify-send (notify-osd)
+ - zenity (optional for file selector)
 
 _This script was essentially written for Ubuntu and Gnome, I have no idea how it will work on other distros/desktop environments._
 

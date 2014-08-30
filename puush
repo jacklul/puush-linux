@@ -8,6 +8,7 @@
 # - curl
 # - xclip
 # - notify-send (notify-osd)
+# - zenity (optional for file selector)
 #
 # Instructions:
 # - Run puush-install as root to install this script in /usr/local/bin and copy icon to /usr/share/pixmaps
@@ -176,6 +177,7 @@ case "$1" in
 			autosavedir restore
 		;;
 	-f|--file|--f)
+			checkDependency "zenity"
 			fileName=`zenity --file-selection`
 			if ! [ -z "$fileName" ] ; then
 				fileURL=`puushFile "$fileName" false`
