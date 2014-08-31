@@ -1,50 +1,32 @@
 #!/bin/bash
 # Puush for Linux (https://github.com/jacklul/puush-linux)
 #  by Jack'lul <www.jacklul.com>
-#   Rewrite of script created by Sunmock Yang (https://github.com/sunmockyang/puush-linux)
 #
-# Dependencies:
-# - gnome-screenshot
-# - curl
-# - xclip
-# - notify-send (notify-osd)
-# - zenity (optional for file selector)
-#
-# Instructions:
-# - Run puush-install as root to install this script in /usr/local/bin and copy icon to /usr/share/pixmaps
-# - Run puush from the terminal to create config file and set your API key (http://puush.me/account/settings)
-# - Set up keyboard shortcuts within linux (in Ubuntu it's system settings > keyboard > keyboard shortcuts > custom shortcuts)
-#
-# 	command			description		(recommended keyboard shortcut)
-#	---------------------------------------------------------------
-#	puush -w		puush window		(Ctrl + Shift + 2/@)
-#	puush -d		puush desktop		(Ctrl + Shift + 3/#)
-#	puush -a		puush area 		(Ctrl + Shift + 4/$)
-#	puush -f		upload file		(Ctrl + Shift + U)
-#
-# - You can also run these commands from the terminal
-#
-# License:
-#  This script is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU Lesser General Public
-#  License (LGPL) as published by the Free Software Foundation; either
-#  version 2.1 of the License, or (at your option) any later version.
+# This script is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License (LGPL) as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
 # 
-#  This script is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-#  Lesser General Public License for more details.
+# This script is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
 # 
-#  You should have received a copy of the GNU Lesser General Public
-#  License along with this script. If not, see <http://www.gnu.org/licenses/>.
+# You should have received a copy of the GNU Lesser General Public
+# License along with this script. If not, see <http://www.gnu.org/licenses/>.
 # 
-#######################
+##################
 
-# Simple function to check if command exists
+# Simple function to check if package is installed
 function checkDependency() 
 {
 	if ! which $1 >/dev/null; then
-		printf "Command '%s' not found! Check dependencies!\n" "$1"
+		if [ -t 1 ] ; then
+			printf "Failed to find required command '$1', check dependencies!\n" "$1"
+		else
+			notify-send "puuush error!" "Failed to find required command '$1', check dependencies!" -t 5000 -i "/usr/share/pixmaps/puush.png"
+		fi
+
 		exit 1
 	fi
 }
@@ -78,7 +60,7 @@ function printHelp ()
 	printf " GitHub: https://github.com/jacklul/puush-linux\n"
 	printf "\n"
 	printf "Usage:\n"
-	printf "  puush [OPTIONS] [FILE]\n"
+	printf "  puush [OPTION] [FILE]\n"
 	printf "\n"
 	printf "OPTIONS:\n"
 	printf "  -d, --desktop		puush entire desktop\n"
@@ -87,46 +69,35 @@ function printHelp ()
 	printf "  -f, --file		puush specific file (opens file dialog)\n"
 	printf "  -h, --help		shows this help\n"
 	printf "\n"
-	printf "FILE:\n"
-	printf "  FILE			optional: path of file to puush\n"
+	printf "FILE specifies path to file you want to upload, must be used\n without parameters.\n"
 	printf "\n"
-}
-
-# Manages org.gnome.gnome-screenshot auto-save-directory
-function autosavedir()
-{			
-	if [ "$1" = "backup" ]; then
-		oldsavedir=`gsettings get org.gnome.gnome-screenshot auto-save-directory`
-	elif [ "$1" = "setnew" ]; then
-		gsettings set org.gnome.gnome-screenshot auto-save-directory "file://$HOME/.cache/puush/"
-	elif [ "$1" = "restore" ]; then
-		gsettings set org.gnome.gnome-screenshot auto-save-directory $oldsavedir
-	fi	
 }
 
 ###################
 # LETS BEGIN
 
 # Check for required commands
-checkDependency "gnome-screenshot"
+checkDependency "scrot"
 checkDependency "curl"
 checkDependency "xclip"
 checkDependency "notify-send"
 
-# Check for configuration, if it doesn't exist create it and promt user for API key
+# Check for configuration, if it doesn't exist create it and ask user for API key
 if ! [ -f "$HOME/.config/puush/puush.conf" ] ; then
 	printf "Configuration file is missing, creating new one...\n"
-
+	
 	if mkdir -p $HOME/.config/puush/; then
-		printf "\n(You can find your API key at http://puush.me/account/settings)\n"
-		read -p "API key: " apikey
-		
+		if [ -t 1 ] ; then
+			printf "\n(You can find your API key at http://puush.me/account/settings)\n"
+			read -p "API key: " apikey
+			printf "\n"
+		fi
+
 		printf "# puush-linux configuration file\n
 # API key (You can find your API key at http://puush.me/account/settings)
 PUUSH_API_KEY=$apikey
 \n" > $HOME/.config/puush/puush.conf
-
-		printf "\n"
+		
 		. $HOME/.config/puush/puush.conf
 	else
 		exit 1
@@ -149,32 +120,31 @@ elif [ -z "$1" ]; then
 	exit 1
 fi
 
-mkdir -p $HOME/.cache/puush
-fileName=""
+fileName="/tmp/$(date '+%Y%m%d%H%I%S').png"
 fileURL=""
 
 # Get file to puush and puush it
 case "$1" in
 	-d|--desktop|--d)
-			autosavedir backup && autosavedir setnew
-			gnome-screenshot >/dev/null 2>/dev/null
-			fileName="$HOME/.cache/puush/$(ls -t "$HOME/.cache/puush/" | head -1)"
+			scrot "$fileName"
+			if ! [ -t 1 ] ; then
+				notify-send "puuush status:" "Uploading..." -t 1500 -i "/usr/share/pixmaps/puush.png"
+			fi			
 			fileURL=`puushFile "$fileName" true`
-			autosavedir restore
 		;;
 	-w|--window|--w)
-			autosavedir backup && autosavedir setnew
-			gnome-screenshot -w >/dev/null 2>/dev/null
-			fileName="$HOME/.cache/puush/$(ls -t "$HOME/.cache/puush/" | head -1)"
+			scrot -ub "$fileName"
+			if ! [ -t 1 ] ; then
+				notify-send "puuush status:" "Uploading..." -t 1500 -i "/usr/share/pixmaps/puush.png"
+			fi		
 			fileURL=`puushFile "$fileName" true`
-			autosavedir restore
 		;;
 	-a|--area|--a)
-			autosavedir backup && autosavedir setnew
-			gnome-screenshot -a >/dev/null 2>/dev/null
-			fileName="$HOME/.cache/puush/$(ls -t "$HOME/.cache/puush/" | head -1)"
+			scrot -s "$fileName"
+			if ! [ -t 1 ] ; then
+				notify-send "puuush status:" "Uploading..." -t 1500 -i "/usr/share/pixmaps/puush.png"
+			fi		
 			fileURL=`puushFile "$fileName" true`
-			autosavedir restore
 		;;
 	-f|--file|--f)
 			checkDependency "zenity"
@@ -195,6 +165,7 @@ case "$1" in
 		;;
 esac
 
+# Show results, copy link to clipboard if upload was successful
 if printf "$fileURL" | grep -q "puu.sh"  ; then
 	printf $fileURL | xclip -selection "clipboard"
 	
