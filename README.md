@@ -16,7 +16,7 @@ _Rewrite of script created by Sunmock Yang (https://github.com/sunmockyang/puush
 - Run **puush-install** as root.
 - Done, you can remove unpacked files.
 
-First time you will run **puush** command it will ask you for API key, see [puush.me Account Settings](http://puush.me/account/settings) to get yours, if you first runned the command from outside terminal (keyboard shortcut) you will have to enter your API key in *~/.config/puush/puush.conf* file.
+First time you will run **puush** command it will ask you for API key, see [puush.me Account Settings](http://puush.me/account/settings) to get yours, if you started the command from outside the terminal (keyboard shortcut) you will have to enter your API key manually in *~/.config/puush/puush.conf* file.
 
 ## Usage
 Set up keyboard shortcuts within linux (in Ubuntu it's *System Settings > Keyboard > Keyboard Shortcuts > Custom Shortcuts*)
