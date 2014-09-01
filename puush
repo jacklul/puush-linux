@@ -130,16 +130,28 @@ fileURL=""
 # Get file to puush and puush it
 case "$1" in
 	-d|--desktop|--d)
-			scrot "$fileName"			
-			fileURL=`puushFile "$fileName" true`
+			scrot "$fileName"	
+			if [ $? -eq 0 ]; then			
+				fileURL=`puushFile "$fileName" true`
+			else
+				exit 1
+			fi
 		;;
 	-w|--window|--w)
-			scrot -bu "$fileName"	
-			fileURL=`puushFile "$fileName" true`
+			scrot -bu "$fileName"
+			if [ $? -eq 0 ]; then			
+				fileURL=`puushFile "$fileName" true`
+			else
+				exit 1
+			fi
 		;;
 	-a|--area|--a)
-			scrot -s "$fileName"	
-			fileURL=`puushFile "$fileName" true`
+			scrot -s "$fileName"
+			if [ $? -eq 0 ]; then
+				fileURL=`puushFile "$fileName" true`
+			else
+				exit 1
+			fi
 		;;
 	-f|--file|--f)
 			checkDependency "zenity"
