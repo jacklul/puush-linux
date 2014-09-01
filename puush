@@ -24,7 +24,7 @@ function checkDependency()
 		if [ -t 1 ] ; then
 			printf "Failed to find required command '$1', check dependencies!\n" "$1"
 		else
-			notify-send "puuush error!" "Failed to find required command '$1', check dependencies!" -t 5000 -i "/usr/share/pixmaps/puush.png"
+			notify-send "puush error!" "Failed to find required command '$1', check dependencies!" -t 5000 -i "/usr/share/pixmaps/puush.png"
 		fi
 
 		exit 1
@@ -43,6 +43,10 @@ function puushFile()
 		printf "File '$1' is not a valid file or is not readable.\n"
 		return
 	fi
+	
+	if ! [ -t 1 ] ; then
+		notify-send "puush" "Uploading..." -t 1500 -i "/usr/share/pixmaps/puush.png"
+	fi
 
 	result=`curl "https://puush.me/api/up" -# -F "k=$PUUSH_API_KEY" -F "z=lulz" -F "f=@$1" | sed -E 's/^.+,(.+),.+,.+$/\1\n/'`
 
@@ -50,7 +54,7 @@ function puushFile()
 	    /bin/rm "$1"
 	fi
 
-	printf $result
+	printf "$result"
 }
 
 # Need help?
@@ -126,24 +130,15 @@ fileURL=""
 # Get file to puush and puush it
 case "$1" in
 	-d|--desktop|--d)
-			scrot "$fileName"
-			if ! [ -t 1 ] ; then
-				notify-send "puuush status:" "Uploading..." -t 1500 -i "/usr/share/pixmaps/puush.png"
-			fi			
+			scrot "$fileName"			
 			fileURL=`puushFile "$fileName" true`
 		;;
 	-w|--window|--w)
-			scrot -ub "$fileName"
-			if ! [ -t 1 ] ; then
-				notify-send "puuush status:" "Uploading..." -t 1500 -i "/usr/share/pixmaps/puush.png"
-			fi		
+			scrot -bu "$fileName"	
 			fileURL=`puushFile "$fileName" true`
 		;;
 	-a|--area|--a)
-			scrot -s "$fileName"
-			if ! [ -t 1 ] ; then
-				notify-send "puuush status:" "Uploading..." -t 1500 -i "/usr/share/pixmaps/puush.png"
-			fi		
+			scrot -s "$fileName"	
 			fileURL=`puushFile "$fileName" true`
 		;;
 	-f|--file|--f)
@@ -165,19 +160,19 @@ case "$1" in
 		;;
 esac
 
-# Show results, copy link to clipboard if upload was successful
+# Show results, copy link to clipboard if upload was successful, otherwise show error
 if printf "$fileURL" | grep -q "puu.sh"  ; then
 	printf $fileURL | xclip -selection "clipboard"
 	
 	if [ -t 1 ] ; then
 		printf "$fileURL\n"
 	else
-		notify-send "puuush complete!" "$fileURL" -t 3000 -i "/usr/share/pixmaps/puush.png"
+		notify-send "puush complete!" "$fileURL" -t 3000 -i "/usr/share/pixmaps/puush.png"
 	fi
 else
 	if [ -t 1 ] ; then
-		printf "puush error: $fileURL\n"
+		printf "Error: $fileURL\n"
 	else
-		notify-send "puuush error!" "$fileURL" -t 5000 -i "/usr/share/pixmaps/puush.png"
+		notify-send "puush error!" "$fileURL" -t 5000 -i "/usr/share/pixmaps/puush.png"
 	fi
 fi
